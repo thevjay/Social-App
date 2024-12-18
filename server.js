@@ -3,6 +3,16 @@ const connectDB=require('./config/database');
 const app=express();
 const User=require('./models/user')
 
+//EP-8
+//middlewares
+//the req.body is sent over the json data format  but the server not able to READ the JSON data;
+//To READ that JSON Data we will need a (middleware) means i will have to use it for all  my  API's that can check the incoming req  and convert the JSON into JSON 
+//it can just read the JSON data  convert into the JSON put into the req.body give the access to the over here
+//
+//(use) method means- if i pass in a function over here what will happend
+//this function req.handler will on run every request 
+
+app.use(express.json())
 
 app.post("/signup",async(req,res)=>{
     const usreObj={
@@ -21,6 +31,32 @@ app.post("/signup",async(req,res)=>{
 
 })
 
+app.get('/user',async(req,res)=>{
+    const userEmail=req.body.email
+    try{
+        // {} - it is a filter it is take a filter
+        const users=await User.find({ emailId : userEmail})
+        if(!users){
+            res.status(404).send("User did not Found")
+        }else{
+            res.send(users);
+        }
+        
+    }catch(error){
+        res.status(400).send("Something went Wrong")
+    }
+})
+
+//Feed API - GET / feed - get all the users from the database
+app.get('/feed',async(req,res)=>{
+    try{
+        const users=await User.find({})
+
+        res.send(users)
+    }catch(error){
+        res.status(400).send("Something went Wrong")
+    }
+})
 
 connectDB()
     .then(()=>{
