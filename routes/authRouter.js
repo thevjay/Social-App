@@ -1,0 +1,156 @@
+const express=require('express')
+const route=express.Router();
+const User=require('../models/user')
+const bcrypt=require('bcrypt')
+const jwt=require('jsonwebtoken')
+const {validateSignUpData}=require('./utils/validation')
+
+
+
+route.post("/signup",async(req,res)=>{
+    try{
+        //validation of data
+        validateSignUpData(req);
+
+        const {firstName,lastName,emailId,password}=req.body;
+
+        //Encrypt the password
+        const passwordHashed=bcrypt.hash(password,10)
+        //dummy123 ,encryption  sgabhb86bj7879@@#$ slat rounds it generate the strong hashed code
+
+        //Creating a new instance of the User model
+        const user=new User({
+            firstName,
+            lastName,
+            emailId,
+            password:passwordHashed,
+        });
+        
+        
+        await user.save();
+        res.send("User Added Successfully")
+    }
+    catch(error){
+        res.status(500).send("Error :" + error.message);
+    }
+    
+})
+
+
+route.post('/login',async(req,res)=>{
+    try{
+        const {emailId,password}=req.body;
+
+        //validation on email id
+
+        //check email is present into db or not
+        const user=await User.findOne({emailId:emailId});
+        if(!user){
+            res.status(404).send("Invalid credentials")
+        }
+
+
+        //bcrypt have compare method like it takes bcrypt.compare(req.body.password,hash)
+        const isPasswordValid = await user.validatePassword(password );
+
+    
+        if(!isPasswordValid){
+
+            //JWT Token - takes HEADER AND PAYLOAD AND VERIFY SIGNATURE(data it is have key value pair of data) to create the token 
+
+            const token=await user.getJWT();
+            
+            
+            //Add the token to cookie and send the response back to the user
+            res.cookie("token",token,{httpOnly:true ,expires :new Date(Date.now() + 8 * 3600000)});
+            res.send("Login Successfull!!")
+        }else{
+            throw new Error("Invalid credentials")
+        }
+    }
+    catch(error){
+        res.status(500).send("ERROR :" + error.message)
+    }
+})
+
+
+
+app.get('/user',async(req,res)=>{
+    const userEmail=req.body.email
+    try{
+        // {} - it is a filter it is take a filter
+        const users=await User.find({ emailId : userEmail})
+        if(!users){
+            res.status(404).send("User did not Found")
+        }else{
+            res.send(users);
+        }
+        
+    }catch(error){
+        res.status(400).send("Something went Wrong")
+    }
+})
+
+//Feed API - GET / feed - get all the users from the database
+app.get('/feed',async(req,res)=>{
+    try{
+        const users=await User.find({})
+
+        res.send(users)
+    }catch(error){
+        res.status(400).send("Something went Wrong")
+    }
+})
+
+
+app.delete('/user',async(req,res)=>{
+    try{
+
+        const userId=req.body.userId;
+
+        const user=await User.findByIdAndDelete({ _id : userId })
+
+        res.send('User deleted successfully')
+    }
+    catch(error){
+        res.send("Somthing went wrong")
+    }
+})
+
+
+app.patch('/user/:userId',async(req,res)=>{
+    const data= req.params?.userId;
+    const userId= req.body.userId;
+
+    const ALLOWED_UPDATES=["photoUrl","about","gender","age","skills"];
+
+    //{
+        // "userId":"1234",
+        // "emailId":".com",
+        // "gender":"m",
+        // "skills":"c++",
+        // "xyz":"sk"
+    //}
+
+    const isUpdateAllowed=Object.keys(data).every((k)=>{
+        ALLOWED_UPDATES.includes(k)
+    })
+
+    if(!isUpdateAllowed){
+        throw new Error("Update not allowed")
+    }
+
+    if(data?.skills.length > 10){
+        throw new Error("Skills cannot be more than 10")
+    }
+    try{
+        await User.findByIdAndUpdate({_id:userId}, ...data)
+
+        res.send("User updated Successfully")
+    }catch(error){
+        res.status(400).send("Something went wrong ")
+    }
+})
+
+
+module.exports=route;
