@@ -7,6 +7,7 @@ const userSchema= new mongoose.Schema({
     firstName:{
         type:String,
         required:true , //required field is takes boolen or fun return boolen it is used to create a document on db mandotary fields 
+        index:true,
         minlength:4,
         maxlength:50
     },
@@ -16,7 +17,7 @@ const userSchema= new mongoose.Schema({
     emailId:{
         type:String,
         required:true,
-        unique:true,
+        unique:true,//if we add unique is true it is autometically creates index:true
         trim:true,
         validate(value){
             if(validator.isEmail(value)){
@@ -39,11 +40,15 @@ const userSchema= new mongoose.Schema({
     },
     gender:{
         type:String,
-        validate(value){
-            if(["male","famale","others"].includes(value)){
-                throw new Error("Gender data is not validate")
-            }
-        }
+        enum:{
+            values:["male","female","other"],
+            message:`{value} is not a valid gender type`,
+        },
+        // validate(value){
+        //     if(["male","famale","others"].includes(value)){
+        //         throw new Error("Gender data is not validate")
+        //     }
+        // },
     },
     photoUrl:{
         type:String,
@@ -63,6 +68,13 @@ const userSchema= new mongoose.Schema({
     }
 },{timestamps : true})
 
+
+//compound index
+//User.find({firstName:"Saini",lastName:"ninne"})
+
+userSchema.index({firstName:1,lastName:1});
+userSchema.index({gender:1});
+                      
 userSchema.methods.getJWT=async function(){
     const user=this;
 

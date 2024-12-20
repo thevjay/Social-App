@@ -3,7 +3,8 @@ const route=express.Router();
 const User=require('../models/user')
 const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
-const {validateSignUpData}=require('./utils/validation')
+const {validateSignUpData}=require('./utils/validation');
+const { userAuth } = require('../middleware/auth');
 
 
 
@@ -75,7 +76,7 @@ route.post('/login',async(req,res)=>{
 
 
 
-app.get('/user',async(req,res)=>{
+route.get('/user',async(req,res)=>{
     const userEmail=req.body.email
     try{
         // {} - it is a filter it is take a filter
@@ -92,7 +93,7 @@ app.get('/user',async(req,res)=>{
 })
 
 //Feed API - GET / feed - get all the users from the database
-app.get('/feed',async(req,res)=>{
+route.get('/feed',async(req,res)=>{
     try{
         const users=await User.find({})
 
@@ -103,7 +104,7 @@ app.get('/feed',async(req,res)=>{
 })
 
 
-app.delete('/user',async(req,res)=>{
+route.delete('/user',async(req,res)=>{
     try{
 
         const userId=req.body.userId;
@@ -118,7 +119,7 @@ app.delete('/user',async(req,res)=>{
 })
 
 
-app.patch('/user/:userId',async(req,res)=>{
+route.patch('/user/:userId',async(req,res)=>{
     const data= req.params?.userId;
     const userId= req.body.userId;
 
@@ -149,6 +150,19 @@ app.patch('/user/:userId',async(req,res)=>{
         res.send("User updated Successfully")
     }catch(error){
         res.status(400).send("Something went wrong ")
+    }
+})
+
+route.post("/logout",userAuth,async(req,res)=>{
+    try{
+        res.cookie('token',null,{
+            expires:new Date(Date.now())
+        })
+
+        res.send("Logout Successfully!! ")
+    }
+    catch(error){
+
     }
 })
 

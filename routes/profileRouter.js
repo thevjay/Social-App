@@ -34,4 +34,25 @@ route.get('/profile',userAuth,async(req,res)=>{
     }
 })
 
+route.patch('/profile/edit',userAuth,async(req,res)=>{
+    try{
+        
+        if(!validateEditProfileData(req)){
+            return res.status(404).send("Invalid edit Request")
+        }
+
+        const loggedInUser=req.user;
+
+        Object.keys(req.body).forEach((key)=>(
+            loggedInUser[key]=req.body[key]
+        ))
+
+        console.log(loggedInUser)
+
+        res.send("Profile updated successfully")
+    }
+    catch(error){
+
+    }
+})
 module.exports=route;
