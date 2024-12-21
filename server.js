@@ -6,6 +6,7 @@ const cookieParser=require('cookie-parser')
 const authRouter=require('./routes/authRouter')
 const profileRouter=require('./routes/profileRouter')
 const request=require('./routes/request')
+const userRoute=require('./routes/userRouter')
 
 //EP-8
 //middlewares
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use('/',authRouter)
 app.use('/',profileRouter)
 app.use('/',request)
+app.use('/',userRoute)
 
 
 
@@ -40,7 +42,3 @@ connectDB()
     .catch((error)=>{
         console.log("Database cannot be connected!!")
     })
-
-
-
-58

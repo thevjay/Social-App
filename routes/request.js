@@ -63,7 +63,50 @@ route.post('/request/send/:status/:toUserId',userAuth,async(req,res)=>{
     }
 })
 
+route.post('/request/review/:status/:requestId',userAuth,async(req,res)=>{
+    try{
+        const loggedUser=req.user;
+        const {status,requestId}=req.params;
 
+        // Validate the status
+        const allowedStatus=["accepted",'rejected']
+        if(!allowedStatus.includes(status)){
+            return res.status(400).json({
+                success:false,
+                message:"Status not allowed"
+            })
+        }
+
+        const connectionRequest=await ConnectionRequest.findOne({
+            _id:requestId,
+            toUserId:loggedUser._id,
+            status:'interested',
+        })
+        if(!connectionRequest){
+            return res.status(404).json({
+                success:false,
+                message:"Connection request not found"
+            })
+        }
+
+        connectionRequest.status=status;
+
+        const data=await connectionRequest.save()
+
+        res.json({
+            message:"Connection request" + status,data
+        })
+
+        // Akshy => Elon
+        // loggedInId = toUserId
+        // status =interested
+        // request Id should be valid
+
+    }
+    catch(error){
+
+    }
+})
 
 
 module.exports=route;
