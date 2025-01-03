@@ -1,8 +1,8 @@
 const express=require('express')
 const route=express.Router();
+
 const User=require('../models/user')
 const bcrypt=require('bcrypt')
-const jwt=require('jsonwebtoken')
 const {validateSignUpData}=require('./utils/validation');
 const { userAuth } = require('../middleware/auth');
 
@@ -16,7 +16,7 @@ route.post("/signup",async(req,res)=>{
         const {firstName,lastName,emailId,password}=req.body;
 
         //Encrypt the password
-        const passwordHashed=bcrypt.hash(password,10)
+        const passwordHashed = await bcrypt.hash(password,10)
         //dummy123 ,encryption  sgabhb86bj7879@@#$ slat rounds it generate the strong hashed code
 
         //Creating a new instance of the User model
@@ -28,8 +28,18 @@ route.post("/signup",async(req,res)=>{
         });
         
         
-        await user.save();
-        res.send("User Added Successfully")
+       const savedUser = await user.save();
+       const token = await savedUser.getJWT();
+
+       res.cookie("token", token,{
+        expires: new Date(Date.now() + 8 * 3600000),
+       })
+
+       res.status(200).json({
+            success : true,
+            message : "User Added Successfully",
+            data : savedUser
+       })
     }
     catch(error){
         res.status(500).send("Error :" + error.message);
@@ -64,7 +74,11 @@ route.post('/login',async(req,res)=>{
             
             //Add the token to cookie and send the response back to the user
             res.cookie("token",token,{httpOnly:true ,expires :new Date(Date.now() + 8 * 3600000)});
-            res.send("Login Successfull!!")
+            res.status(200).json({
+                success : true,
+                message : "Login Successfully",
+                user,
+            })
         }else{
             throw new Error("Invalid credentials")
         }

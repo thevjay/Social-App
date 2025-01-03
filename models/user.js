@@ -78,7 +78,7 @@ userSchema.index({gender:1});
 userSchema.methods.getJWT=async function(){
     const user=this;
 
-    const token = await jwt.sign({_id:user._id},"fsd",{expiresIn:'1h'})
+    const token = await jwt.sign({_id: user._id },"fsd",{expiresIn:'1h'})
 
     return token;
 }
@@ -87,7 +87,10 @@ userSchema.methods.validatePassword=async function (passwordInputByUser) {
     const user=this;
     const passwordHashed=user.password;
 
-    const isPasswordValid=await bcrypt.compare(passwordInputByUser,passwordHashed);;
+    const isPasswordValid=await bcrypt.compare(
+        passwordInputByUser,
+        passwordHashed
+    );
 
     return isPasswordValid;
 }
